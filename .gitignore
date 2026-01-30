@@ -1,0 +1,85 @@
+# Ignore all data files
+/data/
+*.csv
+*.xlsx
+*.ods
+*.json
+*.parquet
+
+# Ignore all saved models
+/models/
+*.joblib
+*.pkl
+*.sav
+
+# Ignore temporary or log files
+/tmp/
+*.log
+*.out
+
+# Keep reports and figures only
+!reports/
+!reports/**
+
+# macOS system files
+.DS_Store
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# PyInstaller files
+*.spec
+
+# Test and coverage files
+htmlcov/
+.tox/
+.nox/
+.coverage*
+.cache/
+.pytest_cache/
+
+# Build and distribution
+build/
+dist/
+*.egg-info/
+.eggs/
+wheels/
+
+# IDE settings
+.vscode/
+.idea/
+.spyderproject
+.spyproject
+.ropeproject
+
+# Type checker caches
+.mypy_cache/
+.pytype/
+.pyre/
+
+# Ruff cache
+.ruff_cache/
+
+# Keep notebooks and code
+!*.ipynb
+!*.py
+
+# Ignore tuner directories and model weights
+tuner_results/
+notebooks/tuner_dir/
+*.h5
+*.keras
