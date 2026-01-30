@@ -1,9 +1,5 @@
 # STLF_GERMANY
 
-<a target="_blank" href="https://cookiecutter-data-science.drivendata.org/">
-    <img src="https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter" />
-</a>
-
 # ML Model Comparison for Short-Term Load Forecasting (STLF)
 
 This repository presents a **systematic comparison of machine learning and deep learning models** for **short-term electricity load forecasting (STLF)**.  
@@ -29,7 +25,7 @@ All models are trained on the same feature set and evaluated on identical foreca
 
 - **Forecasting task:** Multi-horizon STLF (e.g. 24 hours ahead)
 - **Input features:**  
-  Lag-based load features, calendar variables, and exogenous information (where applicable)
+  Lag-based load features and calendar variables
 - **Evaluation strategy:**  
   Rolling / horizon-wise evaluation on a held-out test set
 - **Metrics:**  
