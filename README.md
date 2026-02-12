@@ -44,58 +44,155 @@ Aggregated test performance across all forecast steps *(h = 1…24)*:
 | Model | RMSE (MWh) | MAPE (%) |
 |------:|-----------:|---------:|
 | Random Forest | **2363.02** | **3.02** |
-| LSTM (tuned) | 2482.11 | 3.16 |
+| LSTM | 2409.28 | 3.07 |
 | Transformer | 2685.20 | 3.79 |
 
-**Key takeaways**
-- **Random Forest** achieves the **best overall performance** (lowest RMSE and MAPE) and serves as a strong, interpretable baseline.
-- **LSTM** remains **competitive** with only slightly higher aggregated error, and demonstrates stable multi-horizon behavior when tuned.
-- **Transformer** shows the **highest error** in this setup, indicating that it requires further tuning and/or architectural adjustments to outperform the other approaches.
+---
+
+### Interpretation of the Comparative Results
+
+- **Random Forest** achieves the best overall forecasting performance in both error metrics.
+- **LSTM** ranks second and remains highly competitive, with only slightly higher error values.
+- **Transformer** shows the highest aggregated error under the chosen experimental configuration.
+- The consistent ranking across RMSE and MAPE indicates that the observed performance differences are not metric-specific artifacts but reflect differences in overall forecasting quality.
+
+Importantly, all three models deliver fundamentally solid STLF performance and are suitable for short-term load forecasting tasks.
 
 ---
 
-### Random Forest Findings
+## Error Distribution and Stability
 
-- Hyperparameter tuning across **24 separate horizon-specific models** yields **stable configurations** across horizons.
-- Best settings frequently include **`max_features='sqrt'`**, **`min_samples_split=2`**, and **`min_samples_leaf=1`**, indicating that flexible trees generalize well.
-- Forecast error increases with horizon as expected, but performance remains robust across all steps.
-- Daily aggregated predictions closely match actual load, capturing **seasonal patterns** (winter peaks vs. summer demand) and **weekly structure**.
-- Explainability confirms strong reliance on **time-of-day (`hour`)** and **short-term lags** (e.g., `lag_1`, `lag_2`, `lag_3`) as well as **daily/weekly cycles** (e.g., `lag_24`, `lag_168`).
-- SHAP analysis supports intuitive behavior: higher recent load values increase predicted demand and vice versa.
+Beyond aggregated metrics, the models differ in error variance and forecast stability.
 
----
+### Random Forest
+- Compact error distributions across horizons  
+- Fewer extreme outliers  
+- High forecast stability across short- and long-term horizons  
+- Median errors consistently close to zero  
 
-### LSTM Findings
+### LSTM
+- Broader dispersion in mid-horizons  
+- More pronounced negative outliers (occasional underestimation of load)  
+- Errors stabilize again toward longer horizons  
+- Slight delay in reacting to abrupt load changes  
 
-- Hyperparameter search favors a **high-capacity recurrent configuration** (e.g., **192 LSTM units**, **dense layer ~112 units**) with a **low learning rate (~1.4e-4)**, supporting stable convergence.
-- Training/validation RMSE curves indicate **controlled training dynamics** with no strong evidence of overfitting.
-- Rolling multi-horizon evaluation shows **strong test performance** and stable generalization:
-  - Rolling test RMSE and MAPE remain low overall.
-  - Horizon-wise errors increase gradually, with strongest uncertainty typically appearing in mid-horizons (intra-day transitions).
-- Daily average predictions replicate seasonal trends and weekly cycles with only moderate deviations during extreme load events.
-- Model-agnostic explainability (permutation importance + sensitivity) highlights the importance of **calendar features** (e.g., `hour`, `weekday`, `is_weekend`) combined with **recent lags** (especially `lag_1`).
+### Transformer
+- Highest dispersion across horizons  
+- More symmetric error distribution  
+- Stronger smoothing of short-term fluctuations  
+- Deviations sometimes persist across multiple consecutive days  
 
----
-### Transformer Findings
-
-- The Transformer model was evaluated under the same **multi-horizon (24h ahead)** forecasting setup and compared against Random Forest and LSTM using aggregated test metrics.
-- In this experimental configuration, the Transformer achieved:
-  - **RMSE: 2685.20 MWh**
-  - **MAPE: 3.79%**
-  which is higher than both Random Forest and the tuned LSTM.
-  - The results suggest that, in this dataset and feature configuration, the Transformer’s inductive bias
-  is less well-aligned with short-term load dynamics than tree-based and recurrent models.
+Across all models, median errors remain close to zero.  
+Performance differences are therefore primarily driven by **variance and extreme deviations**, not systematic bias.
 
 ---
 
-### Error Behavior Across Horizons
+## Qualitative Forecast Behavior
 
-Across models, forecast uncertainty is horizon-dependent:
-- **Very short horizons (1–3h ahead)** show the lowest errors.
-- Errors typically increase toward **mid-horizons**, reflecting intra-day transitions and compounding uncertainty.
-- Longer horizons benefit from **daily periodicity**, leading to more stable patterns toward 24h ahead.
+A qualitative comparison of predicted vs. actual load curves shows:
+
+- **Random Forest** closely tracks both short-term fluctuations and long-term seasonality.
+- **LSTM** captures core seasonal and weekly patterns but smooths pronounced load minima and reacts more slowly to abrupt changes.
+- **Transformer** shows stronger smoothing effects and reduced responsiveness to short-term dynamics.
+
+Thus, the models differ not only in accuracy but also in:
+
+- Responsiveness  
+- Stability  
+- Treatment of extreme load trajectories  
 
 ---
+
+## Explainability & Success Drivers (XAI Insights)
+
+Explainable AI analyses reveal fundamentally different modeling strategies.
+
+### Random Forest
+Relies strongly on:
+- Short-term lags (`lag_1`, `lag_2`, `lag_24`)
+- Weekly and medium-term lags (`lag_168`, `lag_336`, `lag_672`)
+
+→ Explicit exploitation of recurring temporal patterns  
+→ Fast and consistent reaction to load changes  
+
+### LSTM
+Distinct functional roles:
+- Calendar features (`hour`, `weekday`, `is_weekend`) → systematic level effects  
+- Lag features (`lag_1`, `lag_2`, `lag_6`, `lag_336`, `lag_8760`) → local adjustments  
+
+→ Smoother predictions  
+→ Temporal smoothing via internal cell state  
+
+### Transformer
+Horizon-dependent feature weighting:
+- Short horizons → short-term lags dominate  
+- Medium horizons → calendar features gain importance  
+- Long horizons → long-term lags (`lag_672`, `lag_8760`) dominate  
+
+→ Dynamic reweighting mechanism via attention  
+
+---
+
+## Key Conclusion
+
+Under the standardized experimental framework of this study:
+
+- **Random Forest provides the highest forecast accuracy and strongest stability across all 24 horizons.**
+- The higher architectural complexity of LSTM and Transformer models does not translate into superior predictive performance in this specific setup.
+- The forecasting task is strongly driven by recurring daily and weekly patterns, which are particularly well captured by tree-based models using explicit lag features.
+
+However, this performance ranking is **conditional on the chosen feature design and experimental framework**, not a universal hierarchy of model classes.
+
+---
+
+## Methodological Considerations
+
+The comparison is deliberately standardized but not architecturally identical.
+
+Important structural differences:
+
+- **Random Forest**: 24 independent horizon-specific models  
+- **LSTM & Transformer**: single multi-output (MIMO) models  
+
+Implications:
+
+- Random Forest can specialize per forecast horizon  
+- Neural models learn shared internal representations across all horizons  
+
+Additional considerations:
+
+- Horizon-specific hyperparameter tuning for Random Forest  
+- Shared tuning for neural models  
+- Transformer tuning conducted on a reduced subset due to computational constraints  
+- Different input window lengths:
+  - Random Forest → single feature vector  
+  - LSTM → 24-hour sequence  
+  - Transformer → 336-hour sequence  
+
+These differences limit strict one-to-one architectural comparability.
+
+---
+
+## Limitations
+
+The most important limitation is the deliberately limited feature set.
+
+Included:
+- Autoregressive lag features  
+- Calendar variables  
+
+Not included:
+- Weather data  
+- Public holidays  
+- Economic indicators  
+- Additional exogenous variables  
+
+This design ensures transparent comparability but may particularly restrict the potential of sequence-based and attention-based models, whose strengths lie in integrating heterogeneous contextual information.
+
+Therefore:
+
+> The results should be interpreted as valid within a deliberately standardized comparative framework rather than as a universal performance hierarchy.
+
 
 ## Reproducibility
 
